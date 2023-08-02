@@ -34,13 +34,10 @@ Time을 모델링하는 것은 매우 중요하다. 최근 연구에서 새로�
 
 <br>
 
-<span style="font-size:120%"><span style="background-color:yellow"><span style="color:black">(Q1)</span></span> 그럼 ICU에서 각각의 medical concept이 수집된 시간과 서로 상호관계가 있을까?(<b>단, 환자가 달라도 말이다.</b>)</span>
+<span style="font-size:220%">(Q1)그럼 ICU에서 각각의 medical concept이 수집된 시간과 서로 상호관계가 있을까?(<b>단, 환자가 달라도 말이다.</b>)</span>
 <br>
 
 <blockquote> 즉, 이런 가설을 세울 수 있다.<br>chartevent에 수집된 시간 기록(offset)은 환자가 바뀌든 아니든 상관 없이 수집된 시간의 간격이라든가 scale이 서로 비슷하고,<br> 이는 labtest에 수집된 시간 기록의 특징과는 다르다.</blockquote>
 
 <br>
 
-
-
-    즉, 이런 가설을 세울 수 있다.<br>chartevent에 수집된 시간 기록(offset)은 환자가 바뀌든 아니든 상관 없이 수집된 시간의 간격이라든가 scale이 서로 비슷하고,<br> 이는 labtest에 수집된 시간 기록의 특징과는 다르다.
