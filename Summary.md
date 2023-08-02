@@ -53,5 +53,5 @@ Time을 모델링하는 것은 매우 중요하다. 최근 연구에서 새로�
 
 <blockquote>
 <br>
-<p align ='center'>Algoritms for predictive modeling in Time series analysis</p><br>
+<p align ='center'><b>Algoritms for predictive modeling in Time series analysis</b></p><br>
 </blockquote>
