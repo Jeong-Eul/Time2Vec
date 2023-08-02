@@ -34,10 +34,24 @@ Time을 모델링하는 것은 매우 중요하다. 최근 연구에서 새로�
 
 <br>
 
-<span style="font-size:220%">(Q1)그럼 ICU에서 각각의 medical concept이 수집된 시간과 서로 상호관계가 있을까?(<b>단, 환자가 달라도 말이다.</b>)</span>
+<i>(Q1)</i> 그럼 ICU에서 각각의 medical concept이 수집된 시간과 서로 상호관계가 있을까?(<b>단, 환자가 달라도 말이다.</b>)
 <br>
 
 <blockquote> 즉, 이런 가설을 세울 수 있다.<br>chartevent에 수집된 시간 기록(offset)은 환자가 바뀌든 아니든 상관 없이 수집된 시간의 간격이라든가 scale이 서로 비슷하고,<br> 이는 labtest에 수집된 시간 기록의 특징과는 다르다.</blockquote>
 
 <br>
 
+논문에서 <b>제안하고자 하는 것</b>:<br>  
+<p align = 'center'><img src ="https://github.com/Jeong-Eul/Time2Vec/blob/main/Image/introduction.jpg?raw=true" width = 80%></p>
+
+ - 학습 가능한 representation (learnable vector represntation)  
+ - 다양한 모델에 쉽게 적용 가능 (easily combined with many models or architectures)
+
+<br>
+
+## Related Work  
+
+<blockquote>
+<br>
+<p align ='center'>Algoritms for predictive modeling in Time series analysis</p><br>
+</blockquote>
