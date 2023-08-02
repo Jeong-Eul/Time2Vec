@@ -129,9 +129,6 @@ $\to$ matrix representation 같은 경우 다른 input과 결합되기 어려움
 <br>
 
 
-<p align='center'><img src = "https://github.com/Jeong-Eul/Time2Vec/blob/main/Image/figure1.jpg?raw=true"></p>
-<br>
-
 ### Dataset in figure  
 
 1. Event-MNIST: MNIST 데이터를 Flat 한 후 픽셀 값이 0.9 보다 큰 위치를 기록한 데이터이다. Event-MNIST는 각각의 픽셀이 시간에 따라 변하는 동적인 데이터로 변환되는데, 이는 이벤트 카메라라고 불리는 카메라를 사용하여 빛의 변화나 움직임이 감지되는 순간에 데이터를 기록할 수 있다.  
@@ -147,6 +144,45 @@ $\to$ matrix representation 같은 경우 다른 input과 결합되기 어려움
 <b>데이터 셋에 대해서 완전히 이해하지는 못했지만, 시간 정보를 잘 모델링할 수 있어야 어떤 Task든 잘 수행할 수 있을 것 같다.</b>
 
 
+### Model architecture used in experiment 
 
+<b>LSTM-T</b>: 기존 LSTM 모델에 Time 정보를 단순히 concat(또는 feature engineering 후)하여 모델의 입력으로 사용한 모델이다.  
+
+<b>TimeLSTM</b>: 기존 LSTM에 존재하지 않았던 time gate를 추가하여 LSTM을 재구성한 것이다. LSTM의 변형 모델 중 하나로 Gers & Schmidhuber(2000)가 소개한 엿보기 구멍(peephole connection)을 LSTM에 추가한 것인데, gate layer들이 cell gate를 반영하게 만든 모델이다.  
+ - TLSTM1, TLSTM2, TLSTM3으로 총 3가지의 변형구조가 존재한다.(본 논문의 Appendix C에서 자세한 내용을 확인할 수 있으며, 'What to Do Next: Modeling User Behaviors by Time-LSTM'이라는 논문에서 증명을 확인할 수 있다.)  
+
+ <p align ='center'><img src = "https://github.com/Jeong-Eul/Time2Vec/blob/main/Image/TLSTM.jpg?raw=true"></p>
+
+
+<b>LSTM+Time2Vec</b>: LSTM-T에서 단순히 time 정보를 concat 했다면, 이 모델은 Time2Vec의 결과를 concat하여 모델의 입력으로 사용한 모델이다.  
+
+<b>TLSTM(n) + Time2Vec</b>: TimeLSTM의 3가지 구조에서 등장하는 time gate의 입력값으로 Time2Vec을 사용한 모델이다.  
+
+<p align='center'><img src="https://github.com/Jeong-Eul/Time2Vec/blob/main/Image/tlstm_t2v.jpg?raw=true"></p>
+
+
+### Ablation study 1.: On the effectiveness of Time2Vec: Question1, 2
+
+<p align='center'><img src = "https://github.com/Jeong-Eul/Time2Vec/blob/main/Image/figure1.jpg?raw=true"></p>
+<br>
+
+figure에서 x 축은 epoch, y 축은 accuracy와 recall(top 5)를 의미한다. 실험을 통해 알 수있는 사실은 다음과 같다.  
+
+1. 다양한 데이터셋에서 Time2Vec을 활용한 LSTM 모델이, 그렇지 않은 모델(시간 정보를 단순히 사용한)보다 성능이 좋았다.
+2. LSTM을 통해 time feature를 추출하는 것 보다, time을 vector로 representation 하여 활용함으로써, LSTM을 잘 optimize 할 수 있다.  
+3. (b), (c)같은 long term sequence 데이터의 경우 Time2Vec을 활용했을 때 더 효율적이다.  
+
+위 3가지 사실로부터, <b><i>Question1.</i></b>: is Time2Vec a good representation for time?에 대한 질문을 해결할 수 있다.  
+
+<p align='center'><img src = "https://github.com/Jeong-Eul/Time2Vec/blob/main/Image/figure2.jpg?raw=true"></p>
+<br>
+
+위 그림은 TLSTM 같은 기존에 존재하는 모델에 time 대신 t2v를 활용하여 실험한 것을 표현하고 있다. 즉, 다른 모델에 쉽게 결합될 수 있는지 확인하고 싶었던 것 같다. 위 실험을 통해 알 수 있는 사실은 다음과 같다.  
+
+1. Time feature를 사용한 TLSTM1,3 보다 t2v를 사용한 모델의 성능이더 좋았다.  
+2. 왜 LSTM에만 t2v를 결합하여 실험했는 지 모르겠다. 내가 연구자였다고 가정했을 때, 진짜로 Simplicity를 증명하고 싶었다면 Bert의 positional encoding 대신에 T2V를 입력하여 성능이 더 잘나오는지 확인했을 것 같다.  
+
+
+### Ablation study 2.: On the effectiveness of Time2Vec: Question3  
 
 
