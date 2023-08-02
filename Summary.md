@@ -114,6 +114,39 @@ $\to$ matrix representation 같은 경우 다른 input과 결합되기 어려움
 - sin 함수 사용으로 unseen data의 time을 외삽(extrapolating)할 수도 있다.(어디다 쓰지?)  
 - 사실 이런 아이디어는 Transformer의 positional encoding에서 착안했음을 밝히고 있다.  
 - 같은 word여도, 서로 다른 position에 존재할 경우 다른 의미를 갖을 수 있는데, 시간도 마찬가지이다.  
-- Time2Vec은 특정 Time을 단순히 vector로 만드는 것이 아니라, 전체 시점을 모두 고려해서 주기적, 비주기적 패턴을 찾을 수 있다.
+- Time2Vec은 특정 Time을 단순히 vector로 만드는 것이 아니라, 전체 시점을 모두 고려해서 주기적, 비주기적 패턴<br>(phase-shift을 모델링$\to$ positional encoding과 다른점)을 찾을 수 있다.  
+
+
+## Experiments & Result  
+
+이 논문은 신기하게 5가지 질문을 정의하고, 이 질문에 대한 답을 찾기위해 ablation study를 진행했다.  
+
+><br><b><i>Question1.</i></b>: is Time2Vec a good representation for time?<br>  
+<b><i>Question2.</i></b>: can Time2Vec be used in other architectures and improve their performance?<br>  
+<b><i>Question3.</i></b>: what do the sine functions learn?<br>  
+<b><i>Question4.</i></b>: can we obtain similar results using non-periodic activation functions for Eq.(23) instead of periodic ones?<br>  
+<b><i>Question5.</i></b>: is there value in learning the sine frequencies or can they be fixed?(fourier or exponentially-decaying values as in Vaswani et al.[57]'s positional encoding)<br>  
+<br>
+
+
+<p align='center'><img src = "https://github.com/Jeong-Eul/Time2Vec/blob/main/Image/figure1.jpg?raw=true"></p>
+<br>
+
+### Dataset in figure  
+
+1. Event-MNIST: MNIST 데이터를 Flat 한 후 픽셀 값이 0.9 보다 큰 위치를 기록한 데이터이다. Event-MNIST는 각각의 픽셀이 시간에 따라 변하는 동적인 데이터로 변환되는데, 이는 이벤트 카메라라고 불리는 카메라를 사용하여 빛의 변화나 움직임이 감지되는 순간에 데이터를 기록할 수 있다.  
+
+2. N_TIDIGITS18: 오디오 데이터셋으로, 시간 t와 주파수 채널 c의 시퀀스 집합으로 구성된 데이터이다. (t,c)  사람이 0(zero, oh) 부터 9까지 총 11개의 숫자를 말하는데 이것이 기록되어 있다. 이 데이터셋의 task는 어떤 숫자를 말하는 지 맞추는 것이다.
+
+3. Stack Overflow: stack overflow 유저가 시간의 흐름에 따라 받은 badge의 시퀀스 집합으로 구성된 데이터이다. (b, t) 여기서의 task는 미래의 t에 어떤 badge를 받을 것인지를 맞추는 것이다.  
+
+4. LastFM: LastFM 유저의 시간의 흐름에 따른 listening habit이 기록된 데이터셋이다. (song, time) 이 데이터셋의 task는 미래의 시간 t에서 어떤 노래를 들을 것인지를 맞추는 것이다.  
+
+5. CiteULike: 유저가 citeulike website에 포스팅한 시간과 어떤 주제를 포스팅 했는지가 포함되어 있으며 Task는 LastFM과 비슷하다.  
+
+<b>데이터 셋에 대해서 완전히 이해하지는 못했지만, 시간 정보를 잘 모델링할 수 있어야 어떤 Task든 잘 수행할 수 있을 것 같다.</b>
+
+
+
 
 
