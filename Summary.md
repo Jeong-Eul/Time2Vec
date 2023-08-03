@@ -262,9 +262,9 @@ class SineActivation(nn.Module):
         return t2v(tau, self.f, self.out_features, self.w, self.b, self.w0, self.b0)
 ```
 
-주목할 점은 SineActivation에서 i가 0일때 행렬곱을 취할 w, b와 i가 1과 k 사이일때(k-1개) 행렬곱을 취할 w,b를 구분하여 주었다는 것이다. 즉, 주기를 학습할 파라미터와 phase-shift를 학습할 파라미터를 따로 구성한다.  
+주목할 점은 SineActivation에서 i가 0일때 행렬곱을 취할 w, b와 i가 1과 k 사이일때(k-1개) 행렬곱을 취할 w,b를 구분하여 주었다는 것이다. 즉, 비주기적 특성(i=0)을 학습할 파라미터와 주기적 특성($1\leq i \leq k$) 을 학습할 파라미터를 따로 구성한다.  
 
-그 후, t2v함수에서 i=0 일때 sin 함수를 통과하지 않은 v2, 0<i<k+1일때 sin 함수를 통과한 v1을 각각 계산한 후에 concat한다. 
+그 후, t2v함수에서 i=0 일때 sin 함수를 통과하지 않은 v2, $0\leq i\leq k+1$일때 sin 함수를 통과한 v1을 각각 계산한 후에 concat한다. 
 
 이러면 t2v를 통과하고 난 후 데이터의 차원은 batch x outfeature 이다.  
 
@@ -366,7 +366,7 @@ question4는 다른 activation function을 사용해도 주기적 특성과 비�
 LSTM 모델에 Time2Vec을 활용하는데, 활성함수를 바꿔가면서 Event-MNIST를 평가한 결과이다.   
 $\to$ sin 함수를 제외한 다른 activation 함수는 성능이 좋지 않았다. 
 
-만약, time representation이 효과가 없었다면 다른 activation 함수를 사용해서 여러번 학습을 돌렸을 때 성능이 잘 나와야한다. 하지만 위 실험 결과에서 sin 함수를 사용한 모델이 압도적으로 좋았다. 이를 저자는 sin 함수가 주기적 특성(frequency) 비주기적 특성(phase-shift)를 학습할 수 있기 때문이라고 주장했다.(이는 주기 특성을 여러개의 신호로 분해하는 푸리에 변환과 비슷한 역할을 할 수 있음)  
+만약, time representation이 효과가 없었다면 다른 activation 함수를 사용해서 여러번 학습을 돌렸을 때 성능이 잘 나와야한다. 하지만 위 실험 결과에서 sin 함수를 사용한 모델이 압도적으로 좋았다. 이를 저자는 sin 함수가 주기적 특성(frequency)과 비주기적 특성을 학습할 수 있기 때문이라고 주장했다.(이는 주기 특성을 여러개의 신호로 분해하는 푸리에 변환과 비슷한 역할을 할 수 있음)  
 
 추가적으로 비주기적 특성을 학습할 수 있는 이유를 다음과 같이 밝히고 있다.  
 
@@ -374,8 +374,8 @@ $\to$ sin 함수를 제외한 다른 activation 함수는 성능이 좋지 않�
 
 위 식은 T2V를 통과하고나서, FC layer의 weight인 $\theta$를 통해 아핀변환 된 과정을 설명한다.  
 
-여기서 Time sequence에서 첫 번째 element는 왼쪽 term이 적용되는데 이 부분을 통해 Phase-shift(비주기적 특성)를 모델링할 수 있다고 한다.  
-$\to$ 개인적으로 sin 함수값(오른쪽 term)을 위 또는 아래(y축 방향 이동)로 미세 조정해줘서 비주기적 특성을 학습할 수 있다고 이해했다.  
+여기서 Time sequence에서 첫 번째 element는 왼쪽 term이 적용되는데 이 부분을 통해 비주기적 특성을 모델링할 수 있다고 한다.  
+$\to$ 왜 이게 비주기적 특성인가?에 대해 이해가 잘 되지 않아서 고민을 해본 결과 해당 Term은 선형함수이고, 선형함수의 특징은 선형 증가 혹은 감소를 모델링할 수 있다는 것이다. 따라서 sin함수처럼 주기적으로 진동하는 와중에, 입력되는 시간 batch 내의 첫 번째 시간요소는 선형변환만 진행하여 임의로 비주기적 특성을 넣어줘서 그런 것 같다. 과연 이게 효과가 있을까? 에 대해서 생각하다가 ablation study 5에서 해당 term의 효과를 증명했다.  
 
 ### Ablation study 4.: Fixed frequencies and phase-shifts: Question5  
 
@@ -391,3 +391,33 @@ LSTM+Time2Vec_fixed_positional_encoding: Vaswani[57]'s method
 
 ### Ablation study 5.: Why catpture non-periodic patterns  
 
+
+아래 실험의 세팅은 다음과 같다.
+
+TLSTM3 + Time2Vec_without_linear_term: TLSTM 모델에 T2V를 입력하는 대신, 비주기적 특성을 학습하는 linear term을 제거한 모델(=주기적 특성만 학습한 모델, 파란색 세모)  
+
+TLSTM3_T: TLSTM 모델에 Time 그 자체를 입력한 모델(=비주기적 특성만 학습한 모델, 초록색 별)  
+
+TLSTM3+Time2Vec: TLSTM 모델에 t2v를 온전히 활용한모델(=주기적 특성과 비주기적 특성 모두를 학습한 모델, 빨간색 점)  
+
+DATASET: citiLike  
+
+
+실험결과는 다음과 같다.  
+
+<p align='center'><img src='https://github.com/Jeong-Eul/Time2Vec/blob/main/Image/figure5_d.jpg?raw=true'></p>
+
+<br>
+
+실험결과 <b>주기적 특성만 학습한 모델</b> $<$ <b>비주기적 특성만 학습한 모델</b> $<$ <b>T2V를 모두 학습한 모델</b> 순서로 성능이 높았다.  
+
+즉, 이 실험을 통해 <b>Time2Vec에는 비주기적 특성을 학습하는 linear term이 필요하다는 것</b>을 알 수 있다.  
+
+$\to$ 데이터의 영향이 꽤 클 것 같다. 이 논문에서도 Event-MNIST를 가지고 같은 실험을 했을 때 애초에 Event-MNIST가 너무 주기적으로 labeling 된 데이터라 linear term을 제거하더라도 큰 영향이 없었다고 밝혔다. 따라서 내가 활용하고자 하는 데이터가 시간과 주기적으로 상호작용하는 지, 그렇지 않은지 명확히 정의한 후에 T2V를 수정해야할 것 같다. (<i><b>Q2.</b></i>그렇다면 ICU data 혹은 EHR data는 주기적인가 비주기적인가?)
+
+
+## 아이디어  
+
+고민 중 입니다.  
+
+<p><img src="https://github.com/Jeong-Eul/CEHR-BERT/blob/main/Image/Idea.jpg?raw=true"></p>
