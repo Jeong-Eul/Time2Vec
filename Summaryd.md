@@ -264,7 +264,7 @@ class SineActivation(nn.Module):
 
 주목할 점은 SineActivation에서 i가 0일때 행렬곱을 취할 w, b와 i가 1과 k 사이일때(k-1개) 행렬곱을 취할 w,b를 구분하여 주었다는 것이다. 즉, 주기를 학습할 파라미터와 phase-shift를 학습할 파라미터를 따로 구성한다.  
 
-그 후, t2v함수에서 i=0 일때 sin 함수를 통과하지 않은 v2, $0<i<k+1$  일때 sin 함수를 통과한 v1을 각각 계산한 후에 concat한다. 
+그 후, t2v함수에서 i=0 일때 sin 함수를 통과하지 않은 v2, 0<i<k+1일때 sin 함수를 통과한 v1을 각각 계산한 후에 concat한다. 
 
 이러면 t2v를 통과하고 난 후 데이터의 차원은 batch x outfeature 이다.  
 
