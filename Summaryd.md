@@ -349,4 +349,45 @@ input(2048,1) -> sinActivation weight((1, 1), (1, 41)) -> t2v(1, 41) , t2v(2047,
 
 <p align ='center'><img src = "https://github.com/Jeong-Eul/Time2Vec/blob/main/Image/figure3.jpg?raw=true"></p>
 
-dsadasdsaddsaDS
+위 과정으로 설계된 아키텍처로 이 데이터셋에 대해서 실험한 결과이다. figure에서 x 축은 time(input)을 의미하고, y 축은 softmax(논문에서는 sigmoid)를 통과하기 전의 FC layer의 결과를 의미한다. 모두 Test set에 대해 평가한 것이다.   
+<br>
+(a)를 보면, 시간이 흐름에 따라 peak인 부분(red dot)이 보이는데, 이 부분이 바로 7의 배수인 time의 representation이다. 주기를 매우 잘 학습했음을 알 수 있다. 학습된 feature 수 만큼의 weight의 대부분이 거의 0.898 $\approx$ $\frac{2\pi}{7}$ 에 근사했다고 밝히고 있으며 phase-shift를 학습하는 $\varphi$는 1.56 $\approx$ $\frac{\pi}{2}$ 에 근사했다고 밝히고 있다.  
+
+중요한점은 (b)이다. 이는 입력된 데이터의 scale을 2배하고 14의 배수를 맞추는 Task였다. 실험결과는 14일을 주기로 진동했으며, scale에 상관 없이 적절한 주기를 학습할 수 있었다.  
+$\to$ 주기, phase-shift가 학습 가능한 파라미터이기 때문에 가능하다.  
+
+
+### Ablation study 3.: Other activation functions: Question4  
+
+question4는 다른 activation function을 사용해도 주기적 특성과 비주기적 특성을 잡아낼 수 있는지에 대한 질문이다. 
+
+<p align ='center'><img src="https://github.com/Jeong-Eul/Time2Vec/blob/main/Image/figure5_a.jpg?raw=true" width = 70%></p>
+
+LSTM 모델에 Time2Vec을 활용하는데, 활성함수를 바꿔가면서 Event-MNIST를 평가한 결과이다.   
+$\to$ sin 함수를 제외한 다른 activation 함수는 성능이 좋지 않았다. 
+
+만약, time representation이 효과가 없었다면 다른 activation 함수를 사용해서 여러번 학습을 돌렸을 때 성능이 잘 나와야한다. 하지만 위 실험 결과에서 sin 함수를 사용한 모델이 압도적으로 좋았다. 이를 저자는 sin 함수가 주기적 특성(frequency) 비주기적 특성(phase-shift)를 학습할 수 있기 때문이라고 주장했다.(이는 주기 특성을 여러개의 신호로 분해하는 푸리에 변환과 비슷한 역할을 할 수 있음)  
+
+추가적으로 비주기적 특성을 학습할 수 있는 이유를 다음과 같이 밝히고 있다.  
+
+<p align ='center'><img src= "https://github.com/Jeong-Eul/Time2Vec/blob/main/Image/t2v_with_fc.jpg?raw=true"></p>  
+
+위 식은 T2V를 통과하고나서, FC layer의 weight인 $\theta$를 통해 아핀변환 된 과정을 설명한다.  
+
+여기서 Time sequence에서 첫 번째 element는 왼쪽 term이 적용되는데 이 부분을 통해 Phase-shift(비주기적 특성)를 모델링할 수 있다고 한다.  
+$\to$ 개인적으로 sin 함수값(오른쪽 term)을 위 또는 아래(y축 방향 이동)로 미세 조정해줘서 비주기적 특성을 학습할 수 있다고 이해했다.  
+
+### Ablation study 4.: Fixed frequencies and phase-shifts: Question5  
+
+question5는 주기적 특성과 비주기적 특성을 학습하는 것이 정말 이 둘을 고정하고 시계열을 근사하는 푸리에 급수와 처음에 주기를 고정하고 이 값으로부터 지수적으로 감소시키는 방법[57] 보다 더 좋은가?에 대한 질문이다.  
+
+
+푸리에 급수와 논문 Vaswani[57]에서 제안한 exponentially-decaying values 기법까지는 이해하지 못했지만, 실험결과를 통해 본 논문에서 제안한 T2V의 주기, 비주기적 특성을 데이터를 기반으로 학습하는 것이 더 좋음을 알 수 있다.   
+
+<p align='center'><img src="https://github.com/Jeong-Eul/Time2Vec/blob/main/Image/figure5_b.jpg?raw=true"></p>
+
+LSTM+Time2Vec_fixed_positional_encoding: Vaswani[57]'s method  
+
+
+### Ablation study 5.: Why catpture non-periodic patterns  
+
