@@ -185,4 +185,168 @@ figure에서 x 축은 epoch, y 축은 accuracy와 recall(top 5)를 의미한다.
 
 ### Ablation study 2.: On the effectiveness of Time2Vec: Question3  
 
+이 실험에서는 T2V의 sin 함수가 어떤 것을 학습할 수 있는지 즉, 데이터와 Task에 맞는 적절한 주기 $w$와 phase-shift $\varphi$를 잘 학습할 수 있는지를 보기위해 진행했음을 알 수 있다.  
 
+실험에서 사용한 데이터셋은 "Synthesized data"로, 단순히 day(일)와 7일 단위로 labeling 된 y가 존재한다. 따라서 본 데이터셋의 Task는 입력된 시간이 7의 배수인지 아닌지 그 여부를 맞추는 문제가 되겠다.  
+
+실험을 위해서 Time2Vec 위에 Fully connected layer를 두고, sigmoid 함수를 통해 클래스에 해당할 확률을 도출할 수 있도록 아키텍처를 구성했다.  
+
+처음에는 input(시간)이 1개씩 들어가서 sigmoid를 취하고 0.5보다 크면 1, 아니면 0으로, 7의 배수인지 아닌지를 맞추는 줄 알았는데, 이렇게 되면 전체 시간의 맥락을 고려할 수 없다.  
+
+누가 이 논문은 깃허브에 코드로 구현해놓은 것이있어 참고해서 이해한 바로는, 일단 batch 단위가 들어가는 것 같다.  
+그 후 여기서는 FC의 출력 노드 수를 2개로 한 후에, Crossentropy(softmax 포함)를 통과하여 확률 값을 도출한다.
+
+
+<b>학습 과정</b>:
+
+1. 데이터셋 불러오기  
+$\to$ data.py 에서 볼 수 있다.  
+
+```python
+from torch.utils.data import Dataset
+import pandas as pd
+import numpy as np
+
+class ToyDataset(Dataset):
+    def __init__(self):
+        super(ToyDataset, self).__init__()
+        
+        df = pd.read_csv("./data/toy_dataset.csv")
+        self.x = df["x"].values
+        self.y = df["y"].values
+
+    def __len__(self):
+        return len(self.x)
+
+    def __getitem__(self, idx):
+        return np.array(self.x[idx]), self.y[idx]
+
+if __name__ == "__main__":
+    dataset = ToyDataset()
+    print(dataset[6])
+```
+
+toy_dataset.csv 라는 것은 위에서 첨부했던 데이터 예시 사진과 같은 데이터셋이다.  
+
+2. Time2Vec 구성하기  
+$\to$ periodic_activation.py에서 확인할수 있다. 여기서 sin 함수를 쓸 것인지, cos 함수를 쓸 것인지 결정할 수 있도록 구현했다.
+ 
+
+```python
+import torch
+from torch import nn
+import numpy as np
+import math
+
+def t2v(tau, f, out_features, w, b, w0, b0, arg=None):
+    if arg:
+        v1 = f(torch.matmul(tau, w) + b, arg)
+    else:
+        #print(w.shape, t1.shape, b.shape)
+        v1 = f(torch.matmul(tau, w) + b)
+    v2 = torch.matmul(tau, w0) + b0
+    #print(v1.shape)
+    return torch.cat([v1, v2], -1)
+
+class SineActivation(nn.Module):
+    def __init__(self, in_features, out_features):
+        super(SineActivation, self).__init__()
+        self.out_features = out_features
+        self.w0 = nn.parameter.Parameter(torch.randn(in_features, 1))
+        self.b0 = nn.parameter.Parameter(torch.randn(1))
+        self.w = nn.parameter.Parameter(torch.randn(in_features, out_features-1))
+        self.b = nn.parameter.Parameter(torch.randn(out_features-1))
+        self.f = torch.sin
+
+    def forward(self, tau):
+        return t2v(tau, self.f, self.out_features, self.w, self.b, self.w0, self.b0)
+```
+
+주목할 점은 SineActivation에서 i가 0일때 행렬곱을 취할 w, b와 i가 1과 k 사이일때(k-1개) 행렬곱을 취할 w,b를 구분하여 주었다는 것이다. 즉, 주기를 학습할 파라미터와 phase-shift를 학습할 파라미터를 따로 구성한다.  
+
+그 후, t2v함수에서 i=0 일때 sin 함수를 통과하지 않은 v2, $0<i<k+1$  일때 sin 함수를 통과한 v1을 각각 계산한 후에 concat한다. 
+
+이러면 t2v를 통과하고 난 후 데이터의 차원은 batch x outfeature 이다.  
+
+3. Fully connected layer 구성하기  
+
+```python
+from periodic_activations import SineActivation, CosineActivation
+from Data import ToyDataset
+from torch import nn
+import torch
+
+class Model(nn.Module):
+    def __init__(self, activation, hiddem_dim):
+        super(Model, self).__init__()
+        if activation == "sin":
+            self.l1 = SineActivation(1, hiddem_dim) 
+        elif activation == "cos":
+            self.l1 = CosineActivation(1, hiddem_dim)
+        
+        self.fc1 = nn.Linear(hiddem_dim, 2)
+    
+    def forward(self, x):
+        #x = x.unsqueeze(1)
+        x = self.l1(x)
+        x = self.fc1(x)
+        return x
+```
+
+정의했던 sineActivation을 불러와주고, 모델을 구성한다. sineActivation을 통과하게 되면, 차원이 batch x outfeature 이므로 fc layer의 입력 차원은 outfeature와 동일하며 출력 차원은 2로 구성하여 최종 모델의 출력을 batch x 2로 만들어준다. 
+
+이러면 각 관측치 마다 노드가 2개 나오며 여기서 softmax를 취해서 시간이 7의 배수인지 아닌지 판단할 수 있다.  
+
+
+4. 훈련 루프 구성하기  
+
+
+```python
+class ToyPipeline(AbstractPipelineClass):
+    def __init__(self, model):
+        self.model = model
+    
+    def train(self):
+        loss_fn = nn.CrossEntropyLoss()
+
+        dataset = ToyDataset()
+        dataloader = DataLoader(dataset, batch_size=2048, shuffle=False)
+
+        optimizer = torch.optim.Adam(self.model.parameters(), lr=1e-3)
+
+        num_epochs = 100
+
+        for ep in range(num_epochs):
+            for x, y in dataloader:
+                optimizer.zero_grad()
+
+                y_pred = self.model(x.unsqueeze(1).float())
+                loss = loss_fn(y_pred, y)
+
+                loss.backward()
+                optimizer.step()
+                
+                print("epoch: {}, loss:{}".format(ep, loss.item()))
+    
+    def preprocess(self, x):
+        return x
+    
+    def decorate_output(self, x):
+        return x
+
+
+pipe = ToyPipeline(Model("sin", 42))
+
+```
+
+맨 아랫부분 객체생성을 보면 인자로 sin 함수를 사용할 것이며, outfeature의 수는 42로 설정했다. batchsize가 2048이므로
+아래와 같은 과정으로 차원을 계산할 수 있다.
+
+input(2048,1) -> sinActivation weight((1, 1), (1, 41)) -> t2v(1, 41) , t2v(2047, 41) -> concat(2048, 42) -> FC weight(42, 2) -> output(2048, 2)
+
+---
+
+
+<p align ='center'><img src = "https://github.com/Jeong-Eul/Time2Vec/blob/main/Image/figure3.jpg?raw=true"></p>
+
+dsadasdsaddsaDS
