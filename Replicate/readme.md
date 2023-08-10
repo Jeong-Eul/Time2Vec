@@ -19,7 +19,7 @@ trainset과 testset은 환자가 겹치지 않도록 독립적으로 분리되�
 hidden node의 수는 42개이며, output node는 기존 구현 버전과 다르게 1개로 고정하고, 마지막 layer에 sigmoid 함수를 씌웠습니다.
 loss는 crossentropy, epoch는 150회, learning rate는 10^(-4)입니다.   
 
-자세한 사항은 experyment.ipynb에 있습니다.  
+자세한 사항은 experiment.ipynb에 있습니다.  
 
 
 ![image](https://github.com/Jeong-Eul/Time2Vec/assets/122766824/9b82a36d-209f-4cff-bd0a-f30e8a0669fe)
